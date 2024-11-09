@@ -11,7 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Models\Models.csproj" />
+    <ProjectReference Include="..\Models\RedisExampleApp.Models.csproj" />
+    <ProjectReference Include="..\RedisExampleApp.Cache\RedisExampleApp.Cache.csproj" />
   </ItemGroup>
 
 </Project>

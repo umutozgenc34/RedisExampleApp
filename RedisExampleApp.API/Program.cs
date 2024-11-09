@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using RedisExampleApp.Cache;
+using RedisExampleApp.Repository;
 using Repository;
 using Services;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +19,27 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseInMemoryDatabase("InMemoryDb");
 });
 
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+builder.Services.AddSingleton<RedisService>(sp =>
+{
+    return new RedisService(builder.Configuration["CacheOptions:Url"]);
+});
+
+builder.Services.AddSingleton<IDatabase>(sp => 
+{ 
+    var redisService = sp.GetRequiredService<RedisService>();
+    return redisService.GetDb(0);
+
+});
+
+builder.Services.AddScoped<IProductRepository>(sp =>
+{
+    var appDbContext = sp.GetRequiredService<AppDbContext>();
+    var productRepository = new ProductRepository(appDbContext);
+    var redisService = sp.GetRequiredService<RedisService>();
+
+    return new ProductRepositoryWithCacheDecorator(productRepository, redisService);
+});
 builder.Services.AddScoped<IProductService, ProductService>();  
 
 var app = builder.Build();
